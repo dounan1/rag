@@ -3,6 +3,13 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+{% if request.args.get('q') %}
+<div class="mb-4 text-gray-600">
+    {% set count = urls|length %}
+    <p>Found {{ count }} result{% if count != 1 %}s{% endif %} for "{{ request.args.get('q') }}"</p>
+</div>
+{% endif %}
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for url in urls %}
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -15,7 +22,31 @@
         {% endif %}
         <div class="p-4">
             <h2 class="text-xl font-semibold mb-2">{{ url.title }}</h2>
-            <p class="text-gray-600 text-sm mb-4">{{ url.description[:150] }}{% if url.description|length > 150 %}...{% endif %}</p>
+            <p class="text-gray-600 text-sm mb-2">{{ url.description[:150] }}{% if url.description|length > 150 %}...{% endif %}</p>
+            <p class="text-gray-500 text-sm mb-4 truncate">{{ url.url }}</p>
+
+            <!-- Raw Content Section -->
+            <div class="mb-4">
+                <button onclick="toggleContent('content-{{ url.id }}')"
+                        class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition duration-200 flex items-center">
+                    <span id="button-text-{{ url.id }}">Show Raw Content</span>
+                    <svg id="chevron-{{ url.id }}" class="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="content-{{ url.id }}" class="hidden mt-2">
+                    <div class="bg-gray-50 rounded-md p-3">
+                        <div class="text-sm text-gray-600 max-h-48 overflow-y-auto">
+                            {% if url.raw_content %}
+                                <pre class="whitespace-pre-wrap font-sans">{{ url.raw_content[:1000] }}{% if url.raw_content|length > 1000 %}...{% endif %}</pre>
+                            {% else %}
+                                <p class="text-gray-400 italic">No raw content available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center">
                 <a href="{{ url.url }}" target="_blank"
                    class="text-blue-500 hover:text-blue-600 transition duration-300">
@@ -31,8 +62,30 @@
     </div>
     {% else %}
     <div class="col-span-full text-center py-10">
-        <p class="text-gray-500">No URLs added yet. Click "Add URL" to get started!</p>
+        {% if request.args.get('q') %}
+            <p class="text-gray-500">No results found for "{{ request.args.get('q') }}". Try a different search term.</p>
+        {% else %}
+            <p class="text-gray-500">No URLs added yet. Click "Add URL" to get started!</p>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
+
+<script>
+function toggleContent(contentId) {
+    const content = document.getElementById(contentId);
+    const buttonText = document.getElementById(`button-text-${contentId.split('-')[1]}`);
+    const chevron = document.getElementById(`chevron-${contentId.split('-')[1]}`);
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        buttonText.textContent = 'Hide Raw Content';
+        chevron.classList.add('rotate-180');
+    } else {
+        content.classList.add('hidden');
+        buttonText.textContent = 'Show Raw Content';
+        chevron.classList.remove('rotate-180');
+    }
+}
+</script>
 {% endblock %}
