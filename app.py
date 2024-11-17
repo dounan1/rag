@@ -11,6 +11,9 @@ from urllib.parse import urlparse
 import os
 from dotenv import load_dotenv
 
+import asyncio
+from crawl4ai import AsyncWebCrawler
+
 # Load environment variables
 load_dotenv()
 
@@ -62,12 +65,15 @@ def get_metadata(url):
         # Get raw content
         raw_content = get_webpage_content(url)
 
+         # Get LLM content asynchronously
+        llm_content = asyncio.run(get_llm_content(url))
+
         return {
             'title': title,
             'description': description,
             'thumbnail': thumbnail,
             'raw_content': raw_content,
-            'llm_content': ''  # add LLM integration
+            'llm_content': llm_content
         }
     except Exception as e:
         print(f"Error fetching metadata: {e}")
@@ -108,6 +114,17 @@ def get_webpage_content(url):
         return text
     except Exception as e:
         print(f"Error fetching webpage content: {e}")
+        return ""
+
+async def get_llm_content(url):
+    try:
+        async with AsyncWebCrawler(verbose=True) as crawler:
+            result = await crawler.arun(url=url)
+            print(f"Got LLM content: {result}")
+
+            return result.fit_markdown
+    except Exception as e:
+        print(f"Error getting LLM content: {e}")
         return ""
 
 @app.route('/')

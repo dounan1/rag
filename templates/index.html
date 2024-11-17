@@ -25,22 +25,44 @@
             <p class="text-gray-600 text-sm mb-2">{{ url.description[:150] }}{% if url.description|length > 150 %}...{% endif %}</p>
             <p class="text-gray-500 text-sm mb-4 truncate">{{ url.url }}</p>
 
-            <!-- Raw Content Section -->
+            <!-- Content Tabs -->
             <div class="mb-4">
-                <button onclick="toggleContent('content-{{ url.id }}')"
-                        class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition duration-200 flex items-center">
-                    <span id="button-text-{{ url.id }}">Show Raw Content</span>
-                    <svg id="chevron-{{ url.id }}" class="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div id="content-{{ url.id }}" class="hidden mt-2">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex">
+                        <button onclick="showContent('raw-{{ url.id }}', this)"
+                                class="text-sm px-3 py-2 border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 transition-colors">
+                            Raw Content
+                        </button>
+                        <button onclick="showContent('llm-{{ url.id }}', this)"
+                                class="text-sm px-3 py-2 border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 transition-colors">
+                            LLM Content
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Raw Content -->
+                <div id="raw-{{ url.id }}" class="content-panel hidden mt-2">
                     <div class="bg-gray-50 rounded-md p-3">
                         <div class="text-sm text-gray-600 max-h-48 overflow-y-auto">
                             {% if url.raw_content %}
                                 <pre class="whitespace-pre-wrap font-sans">{{ url.raw_content[:1000] }}{% if url.raw_content|length > 1000 %}...{% endif %}</pre>
                             {% else %}
                                 <p class="text-gray-400 italic">No raw content available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LLM Content -->
+                <div id="llm-{{ url.id }}" class="content-panel hidden mt-2">
+                    <div class="bg-gray-50 rounded-md p-3">
+                        <div class="text-sm text-gray-600 max-h-48 overflow-y-auto">
+                            {% if url.llm_content %}
+                                <div class="prose prose-sm">
+                                    {{ url.llm_content|safe }}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-400 italic">No LLM content available</p>
                             {% endif %}
                         </div>
                     </div>
@@ -72,20 +94,23 @@
 </div>
 
 <script>
-function toggleContent(contentId) {
-    const content = document.getElementById(contentId);
-    const buttonText = document.getElementById(`button-text-${contentId.split('-')[1]}`);
-    const chevron = document.getElementById(`chevron-${contentId.split('-')[1]}`);
+function showContent(contentId, button) {
+    // Hide all content panels
+    const panels = document.querySelectorAll('.content-panel');
+    panels.forEach(panel => panel.classList.add('hidden'));
 
-    if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        buttonText.textContent = 'Hide Raw Content';
-        chevron.classList.add('rotate-180');
-    } else {
-        content.classList.add('hidden');
-        buttonText.textContent = 'Show Raw Content';
-        chevron.classList.remove('rotate-180');
-    }
+    // Remove active state from all buttons
+    const buttons = button.parentElement.querySelectorAll('button');
+    buttons.forEach(btn => {
+        btn.classList.remove('border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected content and activate button
+    const selectedPanel = document.getElementById(contentId);
+    selectedPanel.classList.remove('hidden');
+    button.classList.remove('border-transparent', 'text-gray-500');
+    button.classList.add('border-blue-500', 'text-blue-600');
 }
 </script>
 {% endblock %}
